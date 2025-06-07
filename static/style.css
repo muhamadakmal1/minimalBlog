@@ -1,0 +1,85 @@
+:root {
+  --bg-color: #f9f9f6;
+  --text-color: #2b2b2b;
+  --card-bg: #ffffff;
+  --meta-color: #888;
+  --btn-border: #aaa;
+  --btn-hover-bg: #222;
+  --btn-hover-color: #fff;
+}
+
+[data-theme="dark"] {
+  --bg-color: #1f1f1f;
+  --text-color: #e4e4e4;
+  --card-bg: #2c2c2c;
+  --meta-color: #aaa;
+  --btn-border: #888;
+  --btn-hover-bg: #e4e4e4;
+  --btn-hover-color: #1f1f1f;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: 'Georgia', serif;
+  line-height: 1.6;
+  transition: background 0.3s, color 0.3s;
+}
+
+.post-card {
+  background: var(--card-bg);
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+}
+
+.post-card:hover {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+}
+
+.post-title {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.post-meta {
+  font-size: 0.85rem;
+  color: var(--meta-color);
+  margin-bottom: 1rem;
+}
+
+.post-excerpt {
+  font-size: 1rem;
+  color: var(--text-color);
+}
+
+.btn-read {
+  background: none;
+  border: 1px solid var(--btn-border);
+  color: var(--text-color);
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.btn-read:hover {
+  background-color: var(--btn-hover-bg);
+  color: var(--btn-hover-color);
+  border-color: var(--btn-hover-bg);
+}
+
+.theme-btn {
+  border: none;
+  background: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-color);
+}
+a{
+    text-decoration: none;
+    color: var(--text-color);
+}

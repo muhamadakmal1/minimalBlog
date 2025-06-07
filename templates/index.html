@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Akmal's Journal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <header class="text-center py-5 border-bottom">
+    <h1 class="display-4 fw-bold">Akmal's Journal</h1>
+    <p class="text-muted">Minimal thoughts, deeply written.</p>
+  </header>
+
+  <main class="container my-5">
+    <div class="row g-5">
+      {% for post in posts %}
+      <div class="col-md-6">
+        <article class="post-card">
+          <h2 class="post-title">{{ post.title }}</h2>
+          <p class="post-meta">{{ post.date }} • {{ post.readTime }} min read</p>
+          {% if post.image %}
+          <img src="{{ url_for('static', filename='uploads/' + post.image) }}" alt="Post Image" class="img-thumbnail mb-3" />
+          {% endif %}
+          <p class="post-excerpt">{{ post.excerpt }}</p>
+          <a href="{{ url_for('post_detail', post_id=post.id) }}" class="btn-read mt-2">Read More</a>
+        </article>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+
+  <footer class="text-center text-muted py-4 border-top">
+    © 2025 Muhamad Akmal. Crafted with clarity.
+  </footer>
+</body>
+</html>

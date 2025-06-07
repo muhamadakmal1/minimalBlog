@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body.dark-mode {
+      background-color: #121212;
+      color: #eee;
+    }
+
+    .sidebar {
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 220px;
+      background-color: #f8f9fa;
+      padding-top: 60px;
+      border-right: 1px solid #ddd;
+    }
+
+    .sidebar.dark-mode {
+      background-color: #1e1e1e;
+      border-color: #333;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 15px 20px;
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .sidebar a.active,
+    .sidebar a:hover {
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+    }
+
+    .sidebar.dark-mode a {
+      color: #ddd;
+    }
+
+    .sidebar.dark-mode a.active,
+    .sidebar.dark-mode a:hover {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .content {
+      margin-left: 230px;
+      padding: 20px;
+    }
+
+    img.profile-img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 15px;
+    }
+
+    /* Make the chart container responsive */
+    #readsChart {
+      max-width: 100%;
+      height: 400px;
+    }
+  </style>
+</head>
+
+<body id="body">
+
+  <div class="sidebar" id="sidebar">
+    <a href="#posts" class="active" onclick="showSection('posts')">Posts</a>
+    <a href="#edit" onclick="showSection('edit')">Edit Posts</a>
+    <a href="#settings" onclick="showSection('settings')">Settings</a>
+    <a href="#stats" onclick="showSection('stats')">Stats</a>
+    <a href="{{ url_for('logout') }}" class="text-danger">Logout</a>
+  </div>
+
+  <div class="content">
+
+    <!-- Posts Section -->
+    <section id="posts" class="section-visible">
+      <form method="POST" enctype="multipart/form-data" class="mb-5" id="postForm">
+        <input type="text" name="title" class="form-control mb-2" placeholder="Title" required />
+        <input type="number" name="readTime" class="form-control mb-2" placeholder="Read Time (minutes)" required />
+        <textarea name="excerpt" class="form-control mb-2" placeholder="Excerpt" rows="3" required></textarea>
+
+        <!-- Hidden textarea without required attribute -->
+        <textarea id="markdown-editor" name="content" rows="10" style="display:none;"></textarea>
+
+        <input type="file" name="image" accept="image/*" class="form-control mb-2" />
+        <button type="submit" class="btn btn-success">Publish</button>
+      </form>
+    </section>
+
+    <!-- Edit Posts Section -->
+    <section id="edit" style="display:none;">
+      <h3>Existing Posts</h3>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Date</th>
+            <th>Read Time</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for post in posts %}
+          <tr>
+            <td>{{ post.id }}</td>
+            <td>{{ post.title }}</td>
+            <td>{{ post.date }}</td>
+            <td>{{ post.readTime }} min</td>
+            <td>
+              <a href="{{ url_for('edit_post', post_id=post.id) }}" class="btn btn-sm btn-primary">Edit</a>
+
+              <form action="{{ url_for('delete_post', post_id=post.id) }}" method="POST" style="display:inline-block;"
+                onsubmit="return confirm('Delete post?');">
+                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5">No posts yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Settings Section -->
+    <section id="settings" style="display:none;">
+      <h3>Settings</h3>
+
+      <div class="d-flex align-items-center mb-4">
+        {% if profile_image %}
+        <img src="{{ url_for('static', filename='profile/' + profile_image) }}" alt="Admin Profile" class="profile-img" />
+        {% else %}
+        <div class="profile-img" style="background:#ccc;"></div>
+        {% endif %}
+        <form method="POST" enctype="multipart/form-data" style="flex-shrink:0;" id="profileForm">
+          <label class="form-label">Change Profile Image:</label>
+          <input type="file" name="profile_image" accept="image/*" class="form-control"
+            onchange="document.getElementById('profileForm').submit();" />
+        </form>
+      </div>
+
+      <hr />
+
+      <form id="privacyForm">
+        <h5>Post Privacy</h5>
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" id="privacySwitch" checked>
+          <label class="form-check-label" for="privacySwitch">Public Posts</label>
+        </div>
+      </form>
+
+      <form id="darkModeForm">
+        <h5>Dark Mode</h5>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="darkModeSwitch">
+          <label class="form-check-label" for="darkModeSwitch">Enable Dark Mode</label>
+        </div>
+      </form>
+    </section>
+
+    <!-- Stats Section -->
+    <section id="stats" style="display:none;">
+      <h3>Stats</h3>
+      <p><strong>Total Posts Read:</strong> {{ total_reads or 0 }}</p>
+      <hr />
+      <h5>Reads per Post</h5>
+      <!-- Chart container -->
+      <canvas id="readsChart" width="600" height="400"></canvas>
+    </section>
+
+  </div>
+
+  <script>
+    function showSection(sectionId) {
+      // Hide all sections
+      document.querySelectorAll('section').forEach(s => s.style.display = 'none');
+      // Remove active class from all links
+      document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+      // Show selected section
+      document.getElementById(sectionId).style.display = 'block';
+      // Add active class to clicked link
+      document.querySelector('.sidebar a[href="#' + sectionId + '"]').classList.add('active');
+    }
+
+    // Dark mode toggle
+    const darkModeSwitch = document.getElementById('darkModeSwitch');
+    darkModeSwitch.addEventListener('change', () => {
+      if (darkModeSwitch.checked) {
+        document.body.classList.add('dark-mode');
+        document.getElementById('sidebar').classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'enabled');
+      } else {
+        document.body.classList.remove('dark-mode');
+        document.getElementById('sidebar').classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'disabled');
+      }
+    });
+
+    // Load dark mode preference
+    window.addEventListener('DOMContentLoaded', () => {
+      if (localStorage.getItem('darkMode') === 'enabled') {
+        darkModeSwitch.checked = true;
+        document.body.classList.add('dark-mode');
+        document.getElementById('sidebar').classList.add('dark-mode');
+      }
+    });
+  </script>
+
+  <script>
+    var easyMDE = new EasyMDE({
+      element: document.getElementById('markdown-editor'),
+      spellChecker: false,
+      autosave: {
+        enabled: true,
+        delay: 1000,
+        uniqueId: "post_content"
+      },
+      placeholder: "Write your post content in Markdown...",
+    });
+
+    document.getElementById('postForm').addEventListener('submit', function (e) {
+      const content = easyMDE.value().trim();
+      if (!content) {
+        e.preventDefault();
+        alert('Content cannot be empty.');
+        easyMDE.codemirror.focus();
+      }
+    });
+  </script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const ctx = document.getElementById('readsChart').getContext('2d');
+
+      const labels = [
+        {% for post in posts %}
+          "{{ post.title|tojson }}",
+
+        {% endfor %}
+      ];
+
+      const data = [
+        {% for post in posts %}
+          {{ post.reads or 0 }},
+        {% endfor %}
+      ];
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Reads',
+            data: data,
+            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              },
+              title: {
+                display: true,
+                text: 'Number of Reads'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Post Title'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: true
+            }
+          },
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>
